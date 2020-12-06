@@ -1,6 +1,6 @@
 import pyxel
 from tiles import (
-    EmptyTile
+    Direction
 )
 
 LEVEL_SIZE = (8, 8)
@@ -10,6 +10,10 @@ class Cell:
     def __init__(self, grid):
         self.grid = grid
         self.tiles = []
+
+    def draw(self, x, y):
+        for tile in self.tiles:
+            tile.draw(x, y)
 
 
 class Grid:
@@ -25,9 +29,26 @@ class Grid:
                 )
             self.grid.append(row)
 
+    @staticmethod
+    def get_move():
+        if pyxel.btn(pyxel.KEY_LEFT) or pyxel.btn(pyxel.GAMEPAD_1_LEFT):
+            return Direction.W
+        if pyxel.btn(pyxel.KEY_LEFT) or pyxel.btn(pyxel.GAMEPAD_1_LEFT):
+            return Direction.W
+        if pyxel.btn(pyxel.KEY_LEFT) or pyxel.btn(pyxel.GAMEPAD_1_LEFT):
+            return Direction.W
+        if pyxel.btn(pyxel.KEY_LEFT) or pyxel.btn(pyxel.GAMEPAD_1_LEFT):
+            return Direction.W
+        return None
+
+    def update(self):
+        move_direction = self.get_move()
+        # run multiple random move attempts until all work
+
     def draw(self):
-        for tile in self.tiles:
-            tile.draw()
+        for x, row in enumerate(self.grid):
+            for y, cell in enumerate(row):
+                cell.draw(x, y)
 
 
 class App:
@@ -41,7 +62,8 @@ class App:
         pyxel.run(self.update, self.draw)
 
     def update(self):
-        pass
+        pyxel.cls(12)
+        self.grid.draw()
 
     def draw(self):
         pyxel.cls(0)
