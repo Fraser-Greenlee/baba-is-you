@@ -31,6 +31,10 @@ class KekeLogic(Logic):
     pass
 
 
+class FlagLogic(Logic):
+    pass
+
+
 class WallLogic(Logic):
     pass
 
@@ -194,6 +198,26 @@ class P1TextTile(PropertyTile):
 
 class P2TextTile(PropertyTile):
     sprite_pos = [0, 7, 1]
+
+
+class PullTextTile(PropertyTile):
+    sprite_pos = [0, 1, 7]
+
+
+class ShiftTextTile(PropertyTile):
+    sprite_pos = [0, 2, 7]
+
+
+class DeadTextTile(PropertyTile):
+    sprite_pos = [0, 3, 7]
+
+
+class SinkTextTile(PropertyTile):
+    sprite_pos = [0, 4, 7]
+
+
+class JumpTextTile(PropertyTile):
+    sprite_pos = [0, 5, 7]
 
 
 class OperatorTile(TextTile):
