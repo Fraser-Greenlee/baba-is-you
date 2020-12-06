@@ -17,12 +17,13 @@ class Grid:
         self.width = width
         self.height = height
         self.grid = []
-        self.tiles = []
-        for y in range(height):
+        for _ in range(height):
             row = []
-            for x in range(width):
-                row.append(Cell(self.grid))
-            self.cells.append(row)
+            for _ in range(width):
+                row.append(
+                    Cell(self.grid)
+                )
+            self.grid.append(row)
 
     def draw(self):
         for tile in self.tiles:
