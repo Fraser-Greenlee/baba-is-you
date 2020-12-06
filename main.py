@@ -1,4 +1,7 @@
 import pyxel
+from tiles import (
+    EmptyTile
+)
 
 LEVEL_SIZE = (8, 8)
 
@@ -6,20 +9,7 @@ LEVEL_SIZE = (8, 8)
 class Cell:
     def __init__(self, grid):
         self.grid = grid
-
-    def update():
-        raise NotImplementedError()
-
-    def draw():
-        raise NotImplementedError()
-
-
-class Empty(Cell):
-    def update():
-        pass
-
-    def draw():
-        pass
+        self.tiles = []
 
 
 class Grid:
@@ -27,11 +17,16 @@ class Grid:
         self.width = width
         self.height = height
         self.grid = []
+        self.tiles = []
         for y in range(height):
             row = []
             for x in range(width):
-                row.append(Empty(self.grid))
+                row.append(Cell(self.grid))
             self.cells.append(row)
+
+    def draw(self):
+        for tile in self.tiles:
+            tile.draw()
 
 
 class App:
