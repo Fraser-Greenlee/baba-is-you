@@ -1,9 +1,19 @@
 import pyxel
+import copy
+import random
+from utils import find_subclasses
 from tiles import (
-    Direction
+    Direction, IsTile, Logic, OnTile, TextTile, PropertyTile, OperatorTile, NounTile
 )
 
 LEVEL_SIZE = (8, 8)
+
+MOVE_ATTEMPTS = 10
+VALID_COMMANDS = [
+    [NounTile, (IsTile, HasTile, MakeTile), NounTile],
+    [NounTile, IsTile, PropertyTile],
+    [NounTile, OnTile, NounTile, IsTile, PropertyTile],
+]
 
 
 class Cell:
@@ -41,9 +51,59 @@ class Grid:
             return Direction.S
         return None
 
-    def update(self):
+    def move_tiles(self):
         move_direction = self.get_move()
-        # run multiple random move attempts until all work
+        if move_direction:
+            # run multiple random move attempts until all work
+            move_counts = []
+            possible_grids = []
+            for _ in range(MOVE_ATTEMPTS):
+                grid_copy = copy.deepcopy(self.grid)
+                movers = self.get_player_tiles()
+                random.shuffle(movers)
+                mv_count = 0
+                for mv in movers:
+                    mv_count += int(mv.move(move_direction))
+                move_counts.append(mv_count)
+                possible_grids.append(grid_copy)
+
+            best_move_i = move_counts.index(max(move_counts))
+            self.grid = possible_grids[best_move_i]
+
+    def _clear_rules(self):
+        for logic_class in find_subclasses(Logic):
+            logic_class.rules = []
+
+    def _get_text_tiles(self, cells):
+        tiles = []
+        for cell in cells:
+            for tile in cell.tiles:
+                if issubclass(type(tile), TextTile):
+                    tiles.append(tile)
+                    break
+        return tiles
+
+    def _col_summary(self, num):
+        return self._get_text_tiles(
+            self._grid_summary([self.grid[i][num] for i in range(len(self.grid))])
+        )
+
+    def _row_summary(self, num):
+        return self._get_text_tiles(
+            self._grid_summary(self.grid[num])
+        )
+
+    def update_rules(self):
+        self._clear_rules()
+        for row_num in range(len(self.grid)):
+            row_text_tiles = self._row_summary(row_num)
+            
+
+
+    def update(self):
+        self.move_tiles()
+        self.update_rules()
+
 
     def draw(self):
         for x, row in enumerate(self.grid):
@@ -63,6 +123,7 @@ class App:
 
     def update(self):
         pyxel.cls(12)
+        self.grid.update()
         self.grid.draw()
 
     def draw(self):

@@ -1,5 +1,5 @@
 import pyxel
-from enum import Enum, Flag
+from enum import Enum
 
 Direction = Enum('W', 'N', 'E', 'S')
 
@@ -13,6 +13,74 @@ class Logic:
 
     def __init__(self):
         raise Exception('Static class')
+
+    def update(self, tile):
+        pass
+
+    def overlap(self, tile, overlaps):
+        '''
+            Act on tiles in `overlaps`
+        '''
+        pass
+
+    def on_move(self, direction, amount):
+        pass
+
+    def on_destroy(self, tile):
+        pass
+
+
+class IsNoun:
+    noun = NotImplemented
+
+    def update(self, tile):
+        new_tile = self.noun()
+        new_tile.direction = tile.direction
+        return new_tile
+
+
+class HasNoun:
+    noun = NotImplemented
+
+    def on_destroy(self):
+        return self.noun()
+
+
+class Shift:
+    def overlap(self, tile, overlaps):
+        for other in overlaps:
+            other.move(tile.direction, 1)
+
+
+class You:
+    pass
+
+
+class P1(You):
+    pass
+
+
+class P2(You):
+    pass
+
+
+class Defeat:
+    def overlap(self, tile, overlaps):
+        for other in overlaps:
+            if issubclass(type(other), You):
+                other.destroy()
+
+
+class Win:
+    def overlap(self, tile, overlaps):
+        for other in overlaps:
+            if issubclass(type(other), You):
+                other.win()
+
+
+class Stop:
+    def on_move(self, direction, amount):
+        return None, None
 
 
 class EmptyLogic(Logic):
@@ -71,6 +139,28 @@ class Tile:
     direction = Direction.E
     sprite_pos = NotImplemented
     logic = NotImplemented
+    want_to_move = [0, 0]  # What move does the tile make if nothing blocks it
+
+    def move(self, direction, amount):
+        '''
+            Makes attempt to move this direction.
+        '''
+        direction, amount = self.logic.on_move(direction, amount)
+        if direction is None:
+            return None
+
+        move_i = 0
+        if direction in (Direction.W, Direction.E):
+            move_i = 1
+
+        move_coef = -1
+        if direction in (Direction.N, Direction.E):
+            move_coef = 1
+
+        self.want_to_move[move_i] += amount * move_coef
+
+    def destroy(self):
+        pass
 
     def draw(self, x, y):
         pyxel.blt(
