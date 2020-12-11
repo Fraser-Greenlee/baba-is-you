@@ -39,6 +39,11 @@ class IsNoun:
         return new_tile
 
 
+class IsProperty:
+    # TODO apply property logic
+    pass
+
+
 class HasNoun:
     noun = NotImplemented
 

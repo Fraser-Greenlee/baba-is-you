@@ -3,7 +3,7 @@ import copy
 import random
 from utils import find_subclasses
 from tiles import (
-    Direction, IsTile, Logic, OnTile, TextTile, PropertyTile, OperatorTile, NounTile
+    Direction, HasNoun, HasTile, IsNoun, IsProperty, IsTile, Logic, OnTile, TextTile, PropertyTile, OperatorTile, NounTile
 )
 
 LEVEL_SIZE = (8, 8)
@@ -12,8 +12,18 @@ MOVE_ATTEMPTS = 10
 VALID_COMMANDS = [
     [NounTile, (IsTile, HasTile, MakeTile), NounTile],
     [NounTile, IsTile, PropertyTile],
-    [NounTile, OnTile, NounTile, IsTile, PropertyTile],
 ]
+ParseTree = {
+    {
+        NounTile: {
+            IsTile: {
+                NounTile: IsNoun,
+                PropertyTile: IsProperty
+            },
+            HasTile: {NounTile: HasNoun},
+        }
+    }
+}
 
 
 class Cell:
@@ -83,22 +93,54 @@ class Grid:
                     break
         return tiles
 
-    def _col_summary(self, num):
+    @staticmethod
+    def is_valid_command(command):
+        pass
+
+    @staticmethod
+    def could_be_valid(command):
+        pass
+
+    def get_valid_text_commands(self, text_groups):
+        all_commands = []
+        for text_tiles in text_groups:
+            last_valid = []
+            current_command = []
+            for tile in text_tiles:
+                new_command = current_command + [tile]
+                if self.is_valid_command(new_command):
+                    last_valid = new_command
+                    current_command = new_command
+                elif self.could_be_valid(new_command):
+                    current_command = new_command
+                else:
+                    current_command = []
+                    if last_valid:
+                        all_commands.append(last_valid)
+        return all_commands
+
+    def _col_text_summary(self, num):
         return self._get_text_tiles(
-            self._grid_summary([self.grid[i][num] for i in range(len(self.grid))])
+            self.get_valid_text_commands([self.grid[i][num] for i in range(len(self.grid))])
         )
 
-    def _row_summary(self, num):
+    def _row_text_summary(self, num):
         return self._get_text_tiles(
-            self._grid_summary(self.grid[num])
+            self.get_valid_text_commands(self.grid[num])
         )
+
+    def execute_commands(commands):
+        # TODO apply Exec classes to relevent Logic subclasses
+        
 
     def update_rules(self):
         self._clear_rules()
+        valid_text_commands = []
         for row_num in range(len(self.grid)):
-            row_text_tiles = self._row_summary(row_num)
-            
-
+            valid_text_commands += self._row_text_summary(row_num)
+        for col_num in range(len(self.grid[0])):
+            valid_text_commands += self._col_text_summary(col_num)
+        execute_commands(valid_text_commands)
 
     def update(self):
         self.move_tiles()
