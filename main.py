@@ -3,25 +3,33 @@ import copy
 import random
 from utils import find_subclasses
 from tiles import (
-    Direction, HasNoun, HasTile, IsNoun, IsProperty, IsTile, Logic, OnTile, TextTile, PropertyTile, OperatorTile, NounTile
+    AndTile, Direction, HasNoun, HasTile, IsNoun, IsProperty, IsTile, Logic, MakeTile, OnTile, TextTile, PropertyTile, NounTile
 )
 
 LEVEL_SIZE = (8, 8)
 
 MOVE_ATTEMPTS = 10
-VALID_COMMANDS = [
-    [NounTile, (IsTile, HasTile, MakeTile), NounTile],
-    [NounTile, IsTile, PropertyTile],
-]
-ParseTree = {
-    {
-        NounTile: {
-            IsTile: {
-                NounTile: IsNoun,
-                PropertyTile: IsProperty
-            },
-            HasTile: {NounTile: HasNoun},
-        }
+# Basic parse tree but should work well enough
+L0_PARSE_PATHS = {
+    NounTile: {
+        IsTile: {
+            NounTile: IsNoun,
+            PropertyTile: IsProperty
+        },
+        HasTile: {NounTile: HasNoun},
+        MakeTile: {NounTile: HasNoun},
+    }
+}
+L1_PARSE_PATHS = {
+    OnTile: {NounTile: L0_PARSE_PATHS},
+    **L0_PARSE_PATHS
+}
+PARSE_PATHS = {
+    NounTile: {
+        AndTile: {
+            L1_PARSE_PATHS
+        },
+        **L1_PARSE_PATHS
     }
 }
 

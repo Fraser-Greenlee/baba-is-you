@@ -44,11 +44,20 @@ class IsProperty:
     pass
 
 
-class HasNoun:
+class Has:
     noun = NotImplemented
 
     def on_destroy(self):
         return self.noun()
+
+
+class Make:
+    noun = NotImplemented
+
+    def update(self, tile):
+        new_tile = self.noun()
+        new_tile.direction = tile.direction
+        return tile, new_tile
 
 
 class Shift:
@@ -67,6 +76,14 @@ class P1(You):
 
 class P2(You):
     pass
+
+
+class Sink:
+    def overlap(self, tile, overlaps):
+        for other in overlaps:
+            other.destroy()
+            self.destroy()
+            break
 
 
 class Defeat:
