@@ -14,7 +14,15 @@ L0_PARSE_PATHS = {
     NounTile: {
         IsTile: {
             NounTile: IsNoun,
-            PropertyTile: IsProperty
+            PropertyTile: {
+                None: IsProperty,
+                AndTile: {
+                    PropertyTile: {
+                        None: IsProperty,
+                        AndTile: {PropertyTile: IsProperty},
+                    },
+                }
+            }
         },
         HasTile: {NounTile: HasNoun},
         MakeTile: {NounTile: HasNoun},
@@ -139,7 +147,7 @@ class Grid:
 
     def execute_commands(commands):
         # TODO apply Exec classes to relevent Logic subclasses
-        
+        pass
 
     def update_rules(self):
         self._clear_rules()
