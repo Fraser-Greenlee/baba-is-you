@@ -2,6 +2,12 @@ import pyxel
 from enum import Enum
 
 Direction = Enum('W', 'N', 'E', 'S')
+DirectionToXY = {
+    Direction.W: (-1, 0),
+    Direction.N: (0, -1),
+    Direction.E: (1, 0),
+    Direction.S: (0, 1),
+}
 
 
 class Logic:
@@ -161,25 +167,6 @@ class Tile:
     direction = Direction.E
     sprite_pos = NotImplemented
     logic = NotImplemented
-    want_to_move = [0, 0]  # What move does the tile make if nothing blocks it
-
-    def move(self, direction, amount):
-        '''
-            Makes attempt to move this direction.
-        '''
-        direction, amount = self.logic.on_move(direction, amount)
-        if direction is None:
-            return None
-
-        move_i = 0
-        if direction in (Direction.W, Direction.E):
-            move_i = 1
-
-        move_coef = -1
-        if direction in (Direction.N, Direction.E):
-            move_coef = 1
-
-        self.want_to_move[move_i] += amount * move_coef
 
     def destroy(self):
         pass

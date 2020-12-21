@@ -3,7 +3,7 @@ import copy
 import random
 from utils import find_subclasses
 from tiles import (
-    AndTile, Direction, HasNoun, HasTile, IsNoun, IsProperty, IsTile, Logic, MakeTile, OnTile, TextTile, PropertyTile, NounTile
+    AndTile, Direction, DirectionToXY, HasNoun, HasTile, IsNoun, IsProperty, IsTile, Logic, MakeTile, OnTile, TextTile, PropertyTile, NounTile
 )
 
 LEVEL_SIZE = (8, 8)
@@ -47,6 +47,12 @@ class Cell:
         self.grid = grid
         self.tiles = []
 
+    def check_overlaps():
+        pass
+
+    def add(self, tile):
+        self.tiles.append(tile)
+
     def draw(self, x, y):
         for tile in self.tiles:
             tile.draw(x, y)
@@ -65,6 +71,9 @@ class Grid:
                 )
             self.grid.append(row)
 
+    def add_tile(self, x, y, tile):
+        self.grid[y][x].add(tile)
+
     @staticmethod
     def get_move():
         if pyxel.btn(pyxel.KEY_LEFT) or pyxel.btn(pyxel.GAMEPAD_1_LEFT):
@@ -77,6 +86,35 @@ class Grid:
             return Direction.S
         return None
 
+    def get_grid_positions(self, start_x, start_y, direction, amount):
+        dir_x, dir_y = DirectionToXY[direction]
+        if dir_x:
+            steps = list(range(start_x, start_x + amount))
+            positions = []
+            for step in steps:
+                positions.append(step, start_y)
+            return positions
+        elif dir_y:
+            steps = list(range(start_y, start_y + amount))
+            positions = []
+            for step in steps:
+                positions.append(start_x, step)
+            return positions
+        return []
+
+    def move_a_tile(self, tile, direction, amount):
+        start_x, start_y = tile.get_coords()
+        for i, x, y in enumerate(self.get_grid_positions(start_x, start_y, direction, amount)):
+            cell = self.grid[y][x]
+            for cell_tile in cell.tiles:
+                if cell_tile.no_overlap and not cell_tile.push(direction):
+                    # hit a blocked/STOP tile
+                    return False
+            # actually move the tile
+            tile.cell.remove(tile)
+            cell.add(tile)
+            cell.check_overlaps()
+
     def move_tiles(self):
         move_direction = self.get_move()
         if move_direction:
@@ -84,12 +122,17 @@ class Grid:
             move_counts = []
             possible_grids = []
             for _ in range(MOVE_ATTEMPTS):
-                grid_copy = copy.deepcopy(self.grid)
-                movers = self.get_player_tiles()
+                grid_copy = Grid()
+                grid_copy.grid = copy.deepcopy(self.grid)
+                movers = grid_copy.get_player_tiles()
                 random.shuffle(movers)
                 mv_count = 0
                 for mv in movers:
-                    mv_count += int(mv.move(move_direction))
+                    mv_count += int(
+                        grid_copy.move_a_tile(
+                            mv, *mv.logic.on_move(move_direction, 1)
+                        )
+                    )
                 move_counts.append(mv_count)
                 possible_grids.append(grid_copy)
 
@@ -156,12 +199,11 @@ class Grid:
             valid_text_commands += self._row_text_summary(row_num)
         for col_num in range(len(self.grid[0])):
             valid_text_commands += self._col_text_summary(col_num)
-        execute_commands(valid_text_commands)
+        self.execute_commands(valid_text_commands)
 
     def update(self):
         self.move_tiles()
         self.update_rules()
-
 
     def draw(self):
         for x, row in enumerate(self.grid):
@@ -173,16 +215,15 @@ class App:
     def __init__(self):
         pyxel.init(8*LEVEL_SIZE[0], 8*LEVEL_SIZE[1])
         self.grid = Grid(*LEVEL_SIZE)
-        # TODO load level
-
-        #
+        # TODO find out how to load a level from that sprite screen
+        import pdb; pdb.set_trace()
         self.x = 0
         pyxel.run(self.update, self.draw)
 
     def update(self):
         pyxel.cls(12)
-        self.grid.update()
         self.grid.draw()
+        self.grid.update()
 
     def draw(self):
         pyxel.cls(0)
