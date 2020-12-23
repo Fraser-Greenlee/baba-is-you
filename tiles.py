@@ -129,6 +129,10 @@ class WallLogic(Logic):
     pass
 
 
+class LavaLogic(Logic):
+    pass
+
+
 class BrickLogic(Logic):
     pass
 
@@ -246,6 +250,11 @@ class FlagTile(Tile):
 class WallTile(Tile):
     logic = WallLogic
     sprite_pos = Point(3, 2)
+
+
+class LavaTile(Tile):
+    logic = LavaLogic
+    sprite_pos = Point(2, 4)
 
 
 class BrickTile(Tile):
@@ -427,6 +436,10 @@ class TileTextTile(NounTile):
 
 class WaterTextTile(NounTile):
     sprite_pos = Point(6, 6)
+
+
+class LavaTextTile(NounTile):
+    sprite_pos = Point(7, 6)
 
 
 ALL_TILE_CLASSES = get_all_lowest_level_subclasses(Tile)

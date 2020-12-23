@@ -1,4 +1,3 @@
-import pdb
 import pyxel
 import copy
 import random
