@@ -443,6 +443,9 @@ class LavaTextTile(NounTile):
 
 
 ALL_TILE_CLASSES = get_all_lowest_level_subclasses(Tile)
+ALL_TEXT_TILE_CLASSES = get_all_lowest_level_subclasses(TextTile)
+ALL_NOUN_TILE_CLASSES = get_all_lowest_level_subclasses(NounTile)
+ALL_PROPERTY_TILE_CLASSES = get_all_lowest_level_subclasses(PropertyTile)
 
 
 def tile_for_index(cell: Cell, index: int) -> Tile:

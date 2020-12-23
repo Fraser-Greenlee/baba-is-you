@@ -29,6 +29,9 @@ class Cell:
     def add(self, tile):
         self.tiles.append(tile)
 
+    def __repr__(self) -> str:
+        return f'Cell<Position: {self.position}, Tiles: {self.tiles}>'
+
     def draw(self):
         for tile in self.tiles:
             tile.draw()

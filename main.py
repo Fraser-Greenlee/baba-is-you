@@ -2,12 +2,13 @@ import pyxel
 import copy
 import random
 from tiles import (
-    Direction, Logic, TextTile, tile_for_index
+    Direction, Logic, ALL_TEXT_TILE_CLASSES, tile_for_index
 )
 from utils import Cell, Point, get_all_lowest_level_subclasses
 from config import (
     MOVE_ATTEMPTS,
     END_SPRITE_INDEX,
+    check_command
 )
 
 
@@ -25,7 +26,7 @@ class Grid:
         assert max_bounds != Point(0, 0), 'No END tile found.'
         return max_bounds
 
-    def __init__(self, start: Point):
+    def __init__(self):
         tilemap = pyxel.tilemap(0)
         max_point = Point(15, 15)
         self.width = max_point.x
@@ -41,6 +42,7 @@ class Grid:
                     cell.add(tile)
                 row.append(cell)
             self.grid.append(row)
+        self.update_rules()
 
     @staticmethod
     def get_move():
@@ -77,8 +79,7 @@ class Grid:
             move_counts = []
             possible_grids = []
             for _ in range(MOVE_ATTEMPTS):
-                grid_copy = Grid()
-                grid_copy.grid = copy.deepcopy(self.grid)
+                grid_copy = copy.deepcopy(self)
                 movers = grid_copy.get_player_tiles()
                 random.shuffle(movers)
                 mv_count = 0
@@ -98,50 +99,36 @@ class Grid:
         for logic_class in get_all_lowest_level_subclasses(Logic):
             logic_class.rules = []
 
-    def _get_text_tiles(self, cells):
-        tiles = []
-        for cell in cells:
-            for tile in cell.tiles:
-                if issubclass(type(tile), TextTile):
-                    tiles.append(tile)
-                    break
-        return tiles
-
-    @staticmethod
-    def is_valid_command(command):
-        pass
-
-    @staticmethod
-    def could_be_valid(command):
-        pass
-
-    def get_valid_text_commands(self, text_groups):
+    def get_valid_text_commands(self, cells):
         all_commands = []
-        for text_tiles in text_groups:
-            last_valid = []
-            current_command = []
-            for tile in text_tiles:
-                new_command = current_command + [tile]
-                if self.is_valid_command(new_command):
-                    last_valid = new_command
-                    current_command = new_command
-                elif self.could_be_valid(new_command):
-                    current_command = new_command
-                else:
-                    current_command = []
-                    if last_valid:
-                        all_commands.append(last_valid)
+        last_valid = []
+        current_command = []
+        for cell in cells:
+            tile = cell.tiles[0]
+            # TODO does this check work?
+            if type(tile) not in ALL_TEXT_TILE_CLASSES:
+                current_command = []
+                if last_valid:
+                    all_commands.append(last_valid)
+                continue
+            new_command = current_command + [tile]
+            is_valid, could_be_valid = check_command(new_command)
+            if is_valid:
+                last_valid = new_command
+                current_command = new_command
+            elif could_be_valid:
+                current_command = new_command
+            else:
+                current_command = []
+                if last_valid:
+                    all_commands.append(last_valid)
         return all_commands
 
     def _col_text_summary(self, num):
-        return self._get_text_tiles(
-            self.get_valid_text_commands([self.grid[i][num] for i in range(len(self.grid))])
-        )
+        return self.get_valid_text_commands([self.grid[i][num] for i in range(len(self.grid))])
 
     def _row_text_summary(self, num):
-        return self._get_text_tiles(
-            self.get_valid_text_commands(self.grid[num])
-        )
+        return self.get_valid_text_commands(self.grid[num])
 
     def execute_commands(commands):
         # TODO apply Exec classes to relevent Logic subclasses
@@ -170,12 +157,12 @@ class App:
     def __init__(self):
         pyxel.init(8*15, 8*15, caption="BABA IS YOU")
         pyxel.load('my_resource.pyxres')
-        self.grid = Grid(Point(0, 0))
+        self.grid = Grid()
         pyxel.run(self.update, self.draw)
 
     def update(self):
         pyxel.cls(12)
-        # self.grid.update()
+        self.grid.update()
 
     def draw(self):
         pyxel.cls(0)
