@@ -1,78 +1,47 @@
+import pdb
 import pyxel
 import copy
 import random
-from utils import find_subclasses
 from tiles import (
-    AndTile, Direction, DirectionToXY, HasNoun, HasTile, IsNoun, IsProperty, IsTile, Logic, MakeTile, OnTile, TextTile, PropertyTile, NounTile
+    Direction, Logic, TextTile, tile_for_index
 )
-
-LEVEL_SIZE = (8, 8)
-
-MOVE_ATTEMPTS = 10
-# Basic parse tree but should work well enough
-L0_PARSE_PATHS = {
-    NounTile: {
-        IsTile: {
-            NounTile: IsNoun,
-            PropertyTile: {
-                None: IsProperty,
-                AndTile: {
-                    PropertyTile: {
-                        None: IsProperty,
-                        AndTile: {PropertyTile: IsProperty},
-                    },
-                }
-            }
-        },
-        HasTile: {NounTile: HasNoun},
-        MakeTile: {NounTile: HasNoun},
-    }
-}
-L1_PARSE_PATHS = {
-    OnTile: {NounTile: L0_PARSE_PATHS},
-    **L0_PARSE_PATHS
-}
-PARSE_PATHS = {
-    NounTile: {
-        AndTile: {
-            L1_PARSE_PATHS
-        },
-        **L1_PARSE_PATHS
-    }
-}
-
-
-class Cell:
-    def __init__(self, grid):
-        self.grid = grid
-        self.tiles = []
-
-    def check_overlaps():
-        pass
-
-    def add(self, tile):
-        self.tiles.append(tile)
-
-    def draw(self, x, y):
-        for tile in self.tiles:
-            tile.draw(x, y)
+from utils import Cell, Point, get_all_lowest_level_subclasses
+from config import (
+    MOVE_ATTEMPTS,
+    END_SPRITE_INDEX,
+)
 
 
 class Grid:
-    def __init__(self, width, height):
-        self.width = width
-        self.height = height
-        self.grid = []
-        for _ in range(height):
-            row = []
-            for _ in range(width):
-                row.append(
-                    Cell(self.grid)
-                )
-            self.grid.append(row)
+    @staticmethod
+    def get_bounds(tilemap) -> Point:
+        max_bounds = Point(0, 0)
+        for y in range(10):
+            for x in range(max_bounds.x, 10):
+                if tilemap.get(x, y) == END_SPRITE_INDEX:
+                    if x > max_bounds.x:
+                        max_bounds.x = x
+                    if y > max_bounds.y:
+                        max_bounds.y = y
+        assert max_bounds != Point(0, 0), 'No END tile found.'
+        return max_bounds
 
-    def add_tile(self, x, y, tile):
-        self.grid[y][x].add(tile)
+    def __init__(self, start: Point):
+        tilemap = pyxel.tilemap(0)
+        max_point = Point(15, 15)
+        self.width = max_point.x
+        self.height = max_point.y
+        self.grid = []
+        for y in range(max_point.y):
+            row = []
+            for x in range(max_point.x):
+                cell = Cell(self, x, y)
+                sprite_index = tilemap.get(x, y)
+                tile = tile_for_index(cell, sprite_index)
+                if tile:
+                    cell.add(tile)
+                row.append(cell)
+            self.grid.append(row)
 
     @staticmethod
     def get_move():
@@ -87,20 +56,7 @@ class Grid:
         return None
 
     def get_grid_positions(self, start_x, start_y, direction, amount):
-        dir_x, dir_y = DirectionToXY[direction]
-        if dir_x:
-            steps = list(range(start_x, start_x + amount))
-            positions = []
-            for step in steps:
-                positions.append(step, start_y)
-            return positions
-        elif dir_y:
-            steps = list(range(start_y, start_y + amount))
-            positions = []
-            for step in steps:
-                positions.append(start_x, step)
-            return positions
-        return []
+        pass
 
     def move_a_tile(self, tile, direction, amount):
         start_x, start_y = tile.get_coords()
@@ -140,7 +96,7 @@ class Grid:
             self.grid = possible_grids[best_move_i]
 
     def _clear_rules(self):
-        for logic_class in find_subclasses(Logic):
+        for logic_class in get_all_lowest_level_subclasses(Logic):
             logic_class.rules = []
 
     def _get_text_tiles(self, cells):
@@ -206,28 +162,25 @@ class Grid:
         self.update_rules()
 
     def draw(self):
-        for x, row in enumerate(self.grid):
-            for y, cell in enumerate(row):
-                cell.draw(x, y)
+        for y, row in enumerate(self.grid):
+            for x, cell in enumerate(row):
+                cell.draw()
 
 
 class App:
     def __init__(self):
-        pyxel.init(8*LEVEL_SIZE[0], 8*LEVEL_SIZE[1])
-        self.grid = Grid(*LEVEL_SIZE)
-        # TODO find out how to load a level from that sprite screen
-        import pdb; pdb.set_trace()
-        self.x = 0
+        pyxel.init(8*15, 8*15, caption="BABA IS YOU")
+        pyxel.load('my_resource.pyxres')
+        self.grid = Grid(Point(0, 0))
         pyxel.run(self.update, self.draw)
 
     def update(self):
         pyxel.cls(12)
-        self.grid.draw()
-        self.grid.update()
+        # self.grid.update()
 
     def draw(self):
         pyxel.cls(0)
-        pyxel.rect(self.x, 0, 8, 8, 9)
+        self.grid.draw()
 
 
 App()

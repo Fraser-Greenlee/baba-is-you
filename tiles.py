@@ -1,13 +1,7 @@
+from typing import Optional, Tuple
 import pyxel
-from enum import Enum
 
-Direction = Enum('W', 'N', 'E', 'S')
-DirectionToXY = {
-    Direction.W: (-1, 0),
-    Direction.N: (0, -1),
-    Direction.E: (1, 0),
-    Direction.S: (0, 1),
-}
+from utils import Direction, Point, get_all_lowest_level_subclasses, Cell
 
 
 class Logic:
@@ -135,6 +129,14 @@ class WallLogic(Logic):
     pass
 
 
+class BrickLogic(Logic):
+    pass
+
+
+class IceLogic(Logic):
+    pass
+
+
 class RockLogic(Logic):
     pass
 
@@ -167,14 +169,24 @@ class Tile:
     direction = Direction.E
     sprite_pos = NotImplemented
     logic = NotImplemented
+    cell = None
+
+    def __init__(self, cell: Cell, drection: Optional[Direction] = None) -> None:
+        self.cell = cell
+        if drection:
+            self.direction = drection
+
+    def is_index(self, index: int) -> Optional[Direction]:
+        if index == self.sprite_pos.x + 32 * self.sprite_pos.y:
+            return self.direction
 
     def destroy(self):
         pass
 
-    def draw(self, x, y):
+    def draw(self):
         pyxel.blt(
-            x, y,
-            self.sprite_pos[0], self.sprite_pos[1] * 8, self.sprite_pos[2] * 8,
+            self.cell.position.x * 8, self.cell.position.y * 8,
+            0, self.sprite_pos.x * 8, self.sprite_pos.y * 8,
             8, 8, 12
         )
 
@@ -182,85 +194,103 @@ class Tile:
 class EmptyTile(Tile):
     logic = EmptyLogic
 
-    def draw():
+    def is_index(self, index: int) -> Optional[Direction]:
+        if index == 0:
+            return self.direction
+
+    def draw(self):
         pass
 
 
-class DirectionalTileMixin:
-    start_sprite = NotImplemented
+DIRECTIION_MAP = [Direction.N, Direction.W, Direction.E, Direction.S]
 
-    def draw(self, x, y):
-        if self.direction == Direction.N:
-            sprite_pos = [0, self.start_sprite[0], self.start_sprite[1]]
-        elif self.direction == Direction.W:
-            sprite_pos = [0, self.start_sprite[0], self.start_sprite[1] + 1]
-        elif self.direction == Direction.E:
-            sprite_pos = [0, self.start_sprite[0], self.start_sprite[1] + 2]
-        elif self.direction == Direction.S:
-            sprite_pos = [0, self.start_sprite[0], self.start_sprite[1] + 3]
-        else:
-            raise Exception('Unknown direction')
 
+class DirectionalTile(Tile):
+    start_sprite: Point = NotImplemented
+
+    def is_index(self, index: int) -> Tuple[bool, Direction]:
+        start_index = self.start_sprite.x + 32 * self.start_sprite.y
+        indices = [start_index + 32 * i for i in range(4)]
+        if index in indices:
+            match = indices.index(index)
+            return DIRECTIION_MAP[match]
+
+    def draw(self):
+        sprite_pos = Point(self.start_sprite.x, self.start_sprite.y)
+        for i, direction in enumerate(DIRECTIION_MAP):
+            if self.direction == direction:
+                sprite_pos.y += i
+                break
         pyxel.blt(
-            x, y,
-            sprite_pos[0], sprite_pos[1] * 8, sprite_pos[2] * 8,
+            self.cell.position.x * 8, self.cell.position.y * 8,
+            0, sprite_pos.x * 8, sprite_pos.y * 8,
             8, 8, 12
         )
 
 
-class BaBaTile(Tile, DirectionalTileMixin):
+class BaBaTile(DirectionalTile):
     logic = BabaLogic
-    start_sprite = [1, 2]
+    start_sprite = Point(1, 2)
 
 
-class KeKeTile(Tile, DirectionalTileMixin):
+class KeKeTile(DirectionalTile):
     logic = KekeLogic
-    start_sprite = [5, 2]
+    start_sprite = Point(5, 2)
 
 
 class FlagTile(Tile):
     logic = FlagLogic
-    sprite_pos = [0, 2, 2]
+    sprite_pos = Point(2, 2)
 
 
 class WallTile(Tile):
     logic = WallLogic
-    sprite_pos = [0, 3, 2]
+    sprite_pos = Point(3, 2)
+
+
+class BrickTile(Tile):
+    logic = BrickLogic
+    sprite_pos = Point(2, 11)
+
+
+class IceTile(Tile):
+    logic = IceLogic
+    sprite_pos = Point(2, 10)
 
 
 class RockTile(Tile):
     logic = RockLogic
-    sprite_pos = [0, 4, 2]
+    sprite_pos = Point(4, 2)
 
 
 class GrassTile(Tile):
     logic = GrassLogic
-    sprite_pos = [0, 2, 3]
+    sprite_pos = Point(2, 3)
 
 
 class TileTile(Tile):
     logic = TileLogic
-    sprite_pos = [0, 3, 3]
+    sprite_pos = Point(3, 3)
 
 
 class WaterTile(Tile):
     logic = WaterLogic
-    sprite_pos = [0, 4, 3]
+    sprite_pos = Point(4, 3)
 
 
 class DoorTile(Tile):
     logic = DoorLogic
-    sprite_pos = [0, 3, 4]
+    sprite_pos = Point(3, 4)
 
 
 class PillarTile(Tile):
     logic = PillarLogic
-    sprite_pos = [0, 4, 4]
+    sprite_pos = Point(4, 4)
 
 
 class BoxTile(Tile):
     logic = BoxLogic
-    sprite_pos = [0, 4, 5]
+    sprite_pos = Point(4, 5)
 
 
 class TextTile(Tile):
@@ -272,51 +302,51 @@ class PropertyTile(TextTile):
 
 
 class YouTextTile(PropertyTile):
-    sprite_pos = [0, 1, 1]
+    sprite_pos = Point(1, 1)
 
 
 class WinTextTile(PropertyTile):
-    sprite_pos = [0, 2, 1]
+    sprite_pos = Point(2, 1)
 
 
 class StopTextTile(PropertyTile):
-    sprite_pos = [0, 3, 1]
+    sprite_pos = Point(3, 1)
 
 
 class PushTextTile(PropertyTile):
-    sprite_pos = [0, 4, 1]
+    sprite_pos = Point(4, 1)
 
 
 class MoveTextTile(PropertyTile):
-    sprite_pos = [0, 5, 1]
+    sprite_pos = Point(5, 1)
 
 
 class P1TextTile(PropertyTile):
-    sprite_pos = [0, 6, 1]
+    sprite_pos = Point(6, 1)
 
 
 class P2TextTile(PropertyTile):
-    sprite_pos = [0, 7, 1]
+    sprite_pos = Point(7, 1)
 
 
 class PullTextTile(PropertyTile):
-    sprite_pos = [0, 1, 7]
+    sprite_pos = Point(1, 7)
 
 
 class ShiftTextTile(PropertyTile):
-    sprite_pos = [0, 2, 7]
+    sprite_pos = Point(2, 7)
 
 
 class DeadTextTile(PropertyTile):
-    sprite_pos = [0, 3, 7]
+    sprite_pos = Point(3, 7)
 
 
 class SinkTextTile(PropertyTile):
-    sprite_pos = [0, 4, 7]
+    sprite_pos = Point(4, 7)
 
 
 class JumpTextTile(PropertyTile):
-    sprite_pos = [0, 5, 7]
+    sprite_pos = Point(5, 7)
 
 
 class OperatorTile(TextTile):
@@ -324,27 +354,27 @@ class OperatorTile(TextTile):
 
 
 class OnTile(OperatorTile):
-    sprite_pos = [0, 0, 0]
+    sprite_pos = Point(0, 0)
 
 
 class IsTile(OperatorTile):
-    sprite_pos = [0, 0, 1]
+    sprite_pos = Point(0, 1)
 
 
 class HasTile(OperatorTile):
-    sprite_pos = [0, 0, 2]
+    sprite_pos = Point(0, 2)
 
 
 class NotTile(OperatorTile):
-    sprite_pos = [0, 0, 3]
+    sprite_pos = Point(0, 3)
 
 
 class MakeTile(OperatorTile):
-    sprite_pos = [0, 0, 4]
+    sprite_pos = Point(0, 4)
 
 
 class AndTile(OperatorTile):
-    sprite_pos = [0, 0, 5]
+    sprite_pos = Point(0, 5)
 
 
 class NounTile(TextTile):
@@ -352,44 +382,61 @@ class NounTile(TextTile):
 
 
 class BaBaTextTile(NounTile):
-    sprite_pos = [0, 1, 0]
+    sprite_pos = Point(1, 0)
 
 
 class FlagTextTile(NounTile):
-    sprite_pos = [0, 2, 0]
+    sprite_pos = Point(2, 0)
 
 
 class WallTextTile(NounTile):
-    sprite_pos = [0, 3, 0]
+    sprite_pos = Point(3, 0)
+
+
+class IceTextTile(NounTile):
+    sprite_pos = Point(1, 8)
 
 
 class RockTextTile(NounTile):
-    sprite_pos = [0, 4, 0]
+    sprite_pos = Point(4, 0)
 
 
 class KekeTextTile(NounTile):
-    sprite_pos = [0, 5, 0]
+    sprite_pos = Point(5, 0)
 
 
 class BoxTextTile(NounTile):
-    sprite_pos = [0, 1, 6]
+    sprite_pos = Point(1, 6)
 
 
 class PillarTextTile(NounTile):
-    sprite_pos = [0, 2, 6]
+    sprite_pos = Point(2, 6)
 
 
 class DoorTextTile(NounTile):
-    sprite_pos = [0, 3, 6]
+    sprite_pos = Point(3, 6)
 
 
 class GrassTextTile(NounTile):
-    sprite_pos = [0, 4, 6]
+    sprite_pos = Point(4, 6)
 
 
 class TileTextTile(NounTile):
-    sprite_pos = [0, 5, 6]
+    sprite_pos = Point(5, 6)
 
 
 class WaterTextTile(NounTile):
-    sprite_pos = [0, 6, 6]
+    sprite_pos = Point(6, 6)
+
+
+ALL_TILE_CLASSES = get_all_lowest_level_subclasses(Tile)
+
+
+def tile_for_index(cell: Cell, index: int) -> Tile:
+    for tile_class in ALL_TILE_CLASSES:
+        try:
+            optional_direction = tile_class(None).is_index(index)
+        except Exception as error:
+            import pdb; pdb.set_trace()
+        if optional_direction:
+            return tile_class(cell, optional_direction)
