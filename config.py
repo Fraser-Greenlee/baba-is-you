@@ -53,3 +53,4 @@ def check_command(command):
         if new_options is None:
             return False, False
     import pdb; pdb.set_trace()
+    return False, True

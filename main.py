@@ -104,13 +104,14 @@ class Grid:
         last_valid = []
         current_command = []
         for cell in cells:
-            tile = cell.tiles[0]
-            # TODO does this check work?
-            if type(tile) not in ALL_TEXT_TILE_CLASSES:
+            tiles = list(filter(lambda x: type(x) in ALL_TEXT_TILE_CLASSES, cell.tiles))
+            if not tiles:
                 current_command = []
                 if last_valid:
                     all_commands.append(last_valid)
                 continue
+            tile = tiles[0]
+            # TODO does this check work?
             new_command = current_command + [tile]
             is_valid, could_be_valid = check_command(new_command)
             if is_valid:
@@ -137,10 +138,10 @@ class Grid:
     def update_rules(self):
         self._clear_rules()
         valid_text_commands = []
-        for row_num in range(len(self.grid)):
-            valid_text_commands += self._row_text_summary(row_num)
         for col_num in range(len(self.grid[0])):
             valid_text_commands += self._col_text_summary(col_num)
+        for row_num in range(len(self.grid)):
+            valid_text_commands += self._row_text_summary(row_num)
         self.execute_commands(valid_text_commands)
 
     def update(self):
