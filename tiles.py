@@ -4,15 +4,19 @@ import pyxel
 from utils import Direction, Point, get_all_lowest_level_subclasses, Cell
 
 
-class Logic:
+class LogicMixin:
     '''
-        Static classes to hold logic for each tile type.
+        Classes to apply logic to each tile type.
     '''
     rules = []
     solid = False
 
     def __init__(self):
-        raise Exception('Static class')
+        raise Exception('Handle parse paths.')
+
+    @staticmethod
+    def parse_command(command):
+        raise NotImplementedError()
 
     def update(self, tile):
         pass
@@ -30,28 +34,56 @@ class Logic:
         pass
 
 
-class IsNoun:
-    noun = NotImplemented
+def get_nouns_before_term(command, term):
+    return [
+        cmd for cmd in command[:command.index(term)] if type(cmd) in ALL_NOUN_TILE_CLASSES
+    ]
+
+
+def get_propertiies_after_term(command, term):
+    return [
+        cmd for cmd in command[command.index(term):] if type(cmd) in ALL_PROPERTY_TILE_CLASSES
+    ]
+
+
+class IsNoun(LogicMixin):
+    def __init__(self, new_noun):
+        self.new_noun = new_noun
+        super().__init__()
+
+    @staticmethod
+    def parse_command(command):
+        new_noun = command[-2]
+        noun_args = get_nouns_before_term(command, IsTile)
+        for noun in noun_args:
+            # TODO apply `IsNoun(new_noun)` to every noun's logic
+            import pdb; pdb.set_trace()
 
     def update(self, tile):
-        new_tile = self.noun()
+        new_tile = self.new_noun()
         new_tile.direction = tile.direction
         return new_tile
 
 
-class IsProperty:
-    # TODO apply property logic
-    pass
+class IsProperty(LogicMixin):
+    @staticmethod
+    def parse_command(command):
+        new_prroperty = type(command[-1])
+        noun_args = get_nouns_before_term(command, IsTile)
+        prop_args = get_propertiies_after_term(command, IsTile)
+        for noun in noun_args:
+            # TODO apply all properties
+            import pdb; pdb.set_trace()
 
 
-class Has:
+class Has(LogicMixin):
     noun = NotImplemented
 
     def on_destroy(self):
         return self.noun()
 
 
-class Make:
+class Make(LogicMixin):
     noun = NotImplemented
 
     def update(self, tile):
@@ -60,7 +92,7 @@ class Make:
         return tile, new_tile
 
 
-class Shift:
+class Shift(LogicMixin):
     def overlap(self, tile, overlaps):
         for other in overlaps:
             other.move(tile.direction, 1)
@@ -103,6 +135,32 @@ class Win:
 class Stop:
     def on_move(self, direction, amount):
         return None, None
+
+
+class Logic:
+    '''
+        Static classes to hold logic for each tile type.
+    '''
+    rules = []
+    solid = False
+
+    def __init__(self):
+        raise Exception('Static class')
+
+    def update(self, tile):
+        pass
+
+    def overlap(self, tile, overlaps):
+        '''
+            Act on tiles in `overlaps`
+        '''
+        pass
+
+    def on_move(self, direction, amount):
+        pass
+
+    def on_destroy(self, tile):
+        pass
 
 
 class EmptyLogic(Logic):

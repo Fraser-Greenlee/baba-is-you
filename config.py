@@ -40,17 +40,14 @@ def check_command(command):
     options = PARSE_PATHS
     for tile in command:
         # TODO find how to match these
-        import pdb; pdb.set_trace()
-        new_options = options.get(tile, None)
-        if NounTile in options:
-            if type(tile) in ALL_NOUN_TILE_CLASSES:
-                new_options = options[NounTile]
-        elif PropertyTile in options:
-            if type(tile) in ALL_PROPERTY_TILE_CLASSES:
-                new_options = options[PropertyTile]
-        if type(new_options) is dict:
-            options = new_options
-        if new_options is None:
-            return False, False
-    import pdb; pdb.set_trace()
-    return False, True
+        if NounTile in options and type(tile) in ALL_NOUN_TILE_CLASSES:
+            options = options[NounTile]
+        elif PropertyTile in options and type(tile) in ALL_PROPERTY_TILE_CLASSES:
+            options = options[PropertyTile]
+        else:
+            options = options.get(type(tile), None)
+        if options is None:
+            return False, False, None
+    if None in options:
+        options = options.get(None, None)
+    return bool(options), True, options

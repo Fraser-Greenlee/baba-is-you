@@ -109,11 +109,12 @@ class Grid:
                 current_command = []
                 if last_valid:
                     all_commands.append(last_valid)
+                    last_valid = []
                 continue
             tile = tiles[0]
             # TODO does this check work?
             new_command = current_command + [tile]
-            is_valid, could_be_valid = check_command(new_command)
+            is_valid, could_be_valid, _ = check_command(new_command)
             if is_valid:
                 last_valid = new_command
                 current_command = new_command
@@ -123,6 +124,7 @@ class Grid:
                 current_command = []
                 if last_valid:
                     all_commands.append(last_valid)
+                    last_valid = []
         return all_commands
 
     def _col_text_summary(self, num):
@@ -131,17 +133,20 @@ class Grid:
     def _row_text_summary(self, num):
         return self.get_valid_text_commands(self.grid[num])
 
-    def execute_commands(commands):
+    def execute_commands(self, commands):
         # TODO apply Exec classes to relevent Logic subclasses
-        pass
+        for command in commands:
+            _, _, result = check_command(command)
+            result.parse_command(command + [result])
+        import pdb; pdb.set_trace()
 
     def update_rules(self):
         self._clear_rules()
         valid_text_commands = []
-        for col_num in range(len(self.grid[0])):
-            valid_text_commands += self._col_text_summary(col_num)
         for row_num in range(len(self.grid)):
             valid_text_commands += self._row_text_summary(row_num)
+        for col_num in range(len(self.grid[0])):
+            valid_text_commands += self._col_text_summary(col_num)
         self.execute_commands(valid_text_commands)
 
     def update(self):
