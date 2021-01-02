@@ -1,3 +1,4 @@
+import re
 from typing import Optional, Tuple
 import pyxel
 
@@ -15,7 +16,7 @@ class LogicMixin:
         raise Exception('Handle parse paths.')
 
     @staticmethod
-    def parse_command(command):
+    def parse_tiles(tiles):
         raise NotImplementedError()
 
     def update(self, tile):
@@ -46,17 +47,33 @@ def get_propertiies_after_term(command, term):
     ]
 
 
+def tile_matches(pattern, tiles):
+    tiles_str = ' '.join(str(t) for t in tiles)
+
+    tile_indices = {}
+    length = 0
+    for tile in tiles:
+        tile_indices[l] = tile
+        length += str(tile) + 1
+
+    tiles = []
+    for match in re.finditer(pattern, tiles_str):
+        tiles.append(tile_indices[match.start()])
+    return tiles
+
+
 class IsNoun(LogicMixin):
     def __init__(self, new_noun):
         self.new_noun = new_noun
         super().__init__()
 
     @staticmethod
-    def parse_command(command):
-        new_noun = command[-2]
-        noun_args = get_nouns_before_term(command, IsTile)
-        for noun in noun_args:
-            # TODO apply `IsNoun(new_noun)` to every noun's logic
+    def parse_tiles(tiles):
+        chage_from_nouns = tile_matches(r'(noun)? and (noun) is', tiles)
+        chage_to_nouns = tile_matches(r' is (noun)', tiles)
+
+        for change_from in chage_from_nouns:
+            # TODO apply IsNoun methods
             import pdb; pdb.set_trace()
 
     def update(self, tile):
@@ -67,17 +84,16 @@ class IsNoun(LogicMixin):
 
 class IsProperty(LogicMixin):
     @staticmethod
-    def parse_command(command):
-        new_prroperty = type(command[-1])
-        noun_args = get_nouns_before_term(command, IsTile)
-        prop_args = get_propertiies_after_term(command, IsTile)
-        for noun in noun_args:
-            # TODO apply all properties
-            import pdb; pdb.set_trace()
+    def parse_tiles(tiles):
+        import pdb; pdb.set_trace()
 
 
 class Has(LogicMixin):
     noun = NotImplemented
+
+    @staticmethod
+    def parse_tiles(tiles):
+        import pdb; pdb.set_trace()
 
     def on_destroy(self):
         return self.noun()
@@ -367,6 +383,9 @@ class TextTile(Tile):
 class PropertyTile(TextTile):
     pass
 
+    def __str__(self) -> str:
+        return 'property'
+
 
 class YouTextTile(PropertyTile):
     sprite_pos = Point(1, 1)
@@ -423,28 +442,48 @@ class OperatorTile(TextTile):
 class OnTile(OperatorTile):
     sprite_pos = Point(0, 0)
 
+    def __str__(self) -> str:
+        return 'on'
+
 
 class IsTile(OperatorTile):
     sprite_pos = Point(0, 1)
+
+    def __str__(self) -> str:
+        return 'is'
 
 
 class HasTile(OperatorTile):
     sprite_pos = Point(0, 2)
 
+    def __str__(self) -> str:
+        return 'has'
+
 
 class NotTile(OperatorTile):
     sprite_pos = Point(0, 3)
+
+    def __str__(self) -> str:
+        return 'not'
 
 
 class MakeTile(OperatorTile):
     sprite_pos = Point(0, 4)
 
+    def __str__(self) -> str:
+        return 'make'
+
 
 class AndTile(OperatorTile):
     sprite_pos = Point(0, 5)
 
+    def __str__(self) -> str:
+        return 'and'
+
 
 class NounTile(TextTile):
+    def __str__(self) -> str:
+        return 'noun'
     pass
 
 

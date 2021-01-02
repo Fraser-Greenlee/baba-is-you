@@ -8,7 +8,7 @@ from utils import Cell, Point, get_all_lowest_level_subclasses
 from config import (
     MOVE_ATTEMPTS,
     END_SPRITE_INDEX,
-    check_command
+    parse_text
 )
 
 
@@ -99,55 +99,45 @@ class Grid:
         for logic_class in get_all_lowest_level_subclasses(Logic):
             logic_class.rules = []
 
-    def get_valid_text_commands(self, cells):
-        all_commands = []
-        last_valid = []
-        current_command = []
+    def get_adjacent_text_tiles(self, cells):
+        text_groups = []
+        current_tiles = []
         for cell in cells:
             tiles = list(filter(lambda x: type(x) in ALL_TEXT_TILE_CLASSES, cell.tiles))
             if not tiles:
-                current_command = []
-                if last_valid:
-                    all_commands.append(last_valid)
-                    last_valid = []
-                continue
-            tile = tiles[0]
-            # TODO does this check work?
-            new_command = current_command + [tile]
-            is_valid, could_be_valid, _ = check_command(new_command)
-            if is_valid:
-                last_valid = new_command
-                current_command = new_command
-            elif could_be_valid:
-                current_command = new_command
+                text_groups.append(current_tiles)
+                current_tiles = []
             else:
-                current_command = []
-                if last_valid:
-                    all_commands.append(last_valid)
-                    last_valid = []
-        return all_commands
+                assert(len(tiles) == 1)
+                current_tiles.append(tiles[0])
+        if current_tiles:
+            text_groups.append(current_tiles)
+        return text_groups
 
     def _col_text_summary(self, num):
-        return self.get_valid_text_commands([self.grid[i][num] for i in range(len(self.grid))])
+        return self.get_adjacent_text_tiles([
+            self.grid[i][num] for i in range(len(self.grid))
+        ])
 
     def _row_text_summary(self, num):
-        return self.get_valid_text_commands(self.grid[num])
+        return self.get_adjacent_text_tiles(self.grid[num])
 
-    def execute_commands(self, commands):
+    def execute_commands(self, adj_text_tiles):
         # TODO apply Exec classes to relevent Logic subclasses
-        for command in commands:
-            _, _, result = check_command(command)
-            result.parse_command(command + [result])
+        for text_tiles in adj_text_tiles:
+            logic_classes_with_tiles = parse_text(text_tiles)
+            for logic_class, tiles in logic_classes_with_tiles:
+                logic_class.parse_tiles(tiles)
         import pdb; pdb.set_trace()
 
     def update_rules(self):
         self._clear_rules()
-        valid_text_commands = []
+        adj_text_tiles = []
         for row_num in range(len(self.grid)):
-            valid_text_commands += self._row_text_summary(row_num)
+            adj_text_tiles += self._row_text_summary(row_num)
         for col_num in range(len(self.grid[0])):
-            valid_text_commands += self._col_text_summary(col_num)
-        self.execute_commands(valid_text_commands)
+            adj_text_tiles += self._col_text_summary(col_num)
+        self.execute_commands(adj_text_tiles)
 
     def update(self):
         self.move_tiles()
