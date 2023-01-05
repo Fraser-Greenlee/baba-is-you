@@ -1,4 +1,9 @@
-from baba.utils import *
+from baba.utils import (
+    windowed,
+    isnoun, isis, isproperty,
+    make_behaviour,
+    NOUNS
+)
 
 
 def rulefinder(grid):
@@ -49,6 +54,6 @@ def ruleparser(rules):
     swaps = sorted(swaps)
 
     # Add entry for text behaviour
-    behaviours["t"] = make_behaviour(push=True)
+    behaviours["text"] = make_behaviour(push=True)
 
     return behaviours, swaps

@@ -3,9 +3,15 @@ from copy import deepcopy
 
 import pyxel
 
-from baba.rules import *
-from baba.utils import *
-
+from baba.rules import (
+    rulefinder,
+    ruleparser,
+)
+from baba.utils import (
+    rotate_180, rotate_p90, rotate_m90,
+    isentity, istext, isempty, empty_NM,
+    flatten,
+)
 
 BOARD_SHAPE = (8, 8)
 SPRITE_NAMES = {
@@ -16,15 +22,15 @@ SPRITE_NAMES = {
 
     (24, 0): 'is',
 
-    (8, 0): '_you',
-    (9, 0): '_win',
-    (10, 0): '_stop',
-    (11, 0): '_push',
+    (8, 0): 'you',
+    (9, 0): 'win',
+    (10, 0): 'stop',
+    (11, 0): 'push',
 
-    (0, 11): 'BaBa',
-    (0, 12): 'BaBa',
-    (0, 13): 'BaBa',
-    (0, 14): 'BaBa',
+    (0, 11): 'Baba',
+    (0, 12): 'Baba',
+    (0, 13): 'Baba',
+    (0, 14): 'Baba',
     (4, 0): 'Wall',
     (5, 0): 'Rock',
 }
@@ -68,6 +74,7 @@ class Board:
                 sprite_index = tilemap.pget(x, y)
                 self.grid[-1].append(SPRITE_NAMES[sprite_index])
 
+    @staticmethod
     def swap(grid, swaps):
         """Apply all the swaps to the grid"""
 
@@ -97,8 +104,8 @@ class Board:
             raise UnableToMove
 
         # Larger pile
-        pushable = lambda cell: (isentity(cell) and behaviours[cell.lower()]["p"]) or (
-            istext(cell) and behaviours["t"]["p"]
+        pushable = lambda cell: (isentity(cell) and behaviours[cell.lower()]["push"]) or (
+            istext(cell) and behaviours["text"]["push"]
         )
         if not pushable(pile[0]):
             raise UnableToMove
@@ -109,15 +116,14 @@ class Board:
             budged = self.attempt_to_move(pile[1:], behaviours)
             return (budged[0], pile[0], *budged[1:])
 
-    def timestep(self, step, behaviours):
-        """Advance grid a single timestep, given the step and the current behaviours"""
+    def runstep(self, step, behaviours):
+        """Advance grid a single step, given the step and the current behaviours"""
         self.grid = rots[step](self.grid)
         N, M = len(self.grid), len(self.grid[0])
         new_grid = empty_NM(N, M)
 
-        isyou = lambda cell: isentity(cell) and behaviours[cell.lower()]["y"]
-        iswin = lambda cell: isentity(cell) and behaviours[cell.lower()]["n"]
-        youwin = None  # youwin exception
+        isyou = lambda cell: isentity(cell) and behaviours[cell.lower()]["you"]
+        iswin = lambda cell: isentity(cell) and behaviours[cell.lower()]["win"]
 
         for j, row in enumerate(self.grid):
             for k, cell in enumerate(row):
@@ -138,14 +144,14 @@ class Board:
                     new_grid[j - 1][k] = cell
                 except UnableToMove:
                     if len(pile) > 0 and iswin(pile[0]):
-                        youwin = YouWin(
-                            f"You are '{sn(cell)}' and you've walked onto a '{sn(pile[0])}'"
+                        raise YouWin(
+                            f"You are '{cell}' and you've walked onto a '{pile[0]}'"
                             " which is 'win'. Hooray! :D "
                         )
                     new_grid[j][k] = cell
 
         new_grid = crots[step](new_grid)
-        return new_grid, youwin
+        return new_grid
 
     def update(self, step):
         rules = rulefinder(self.grid)
@@ -153,21 +159,19 @@ class Board:
 
         # Check for you is win condition
         for noun in behaviours:
-            if behaviours[noun]["y"] and behaviours[noun]["n"]:
+            if behaviours[noun]["you"] and behaviours[noun]["win"]:
                 raise YouWin(f"You are '{noun}' and you are 'win'. Hooray! :D")
 
         # Do the swap
-        self.grid = self.swap(swaps)
+        self.grid = self.swap(self.grid, swaps)
 
         entities_present = {j.lower() for j in flatten(self.grid) if isentity(j)}
-        if not any(behaviours[e]["y"] for e in entities_present):
+        if not any(behaviours[e]["you"] for e in entities_present):
             raise YouLose("Nothing is 'you'. Game over.")
 
         # Timestep the grid
         if step:
-            youwin = self.timestep(step, behaviours)
-            if youwin:
-                raise youwin
+            self.runstep(step, behaviours)
         step += 1
 
     def draw(self):
@@ -211,8 +215,3 @@ class App:
     def draw(self):
         pyxel.cls(0)
         self.board.draw()
-
-
-
-if __name__ == '__main__':
-    app = App()

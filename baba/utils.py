@@ -26,31 +26,25 @@ __all__ = [
     "empty_NM",
     "make_behaviour",
     "isvalidgrid",
-    "symbol_to_name",
 ]
 
 
-PROPERTIES = ("y", "p", "n")
-PROPERTY_NAMES = ("you", "push", "win")
+PROPERTIES = ("you", "push", "win", "stop")
 
-NOUNS = ("b", "w", "f", "r")
-NOUN_NAMES = ("baba", "wall", "flag", "rock")
+NOUNS = ("baba", "wall", "flag", "rock")
 
-ENTITIES = tuple(n.upper() for n in NOUNS)
-ENTITY_NAMES = tuple(n.capitalize() for n in NOUN_NAMES)
+ENTITIES = tuple(n.capitalize() for n in NOUNS)
 
 # Helper functions
 isproperty = lambda symbol: symbol in PROPERTIES
 isnoun = lambda symbol: symbol in NOUNS
 isentity = lambda symbol: symbol in ENTITIES
 
-SYMBOLS = (*PROPERTIES, *NOUNS, *ENTITIES, "i")
-SYMBOL_NAMES = (*PROPERTY_NAMES, *NOUN_NAMES, *ENTITY_NAMES, "is")
+SYMBOLS = (*PROPERTIES, *NOUNS, *ENTITIES, "is")
 issymbol = lambda symbol: symbol in SYMBOLS
-isis = lambda symbol: symbol == "i"
+isis = lambda symbol: symbol == "is"
 
-TEXT = (*PROPERTIES, *NOUNS, "i")
-TEXT_NAMES = (*PROPERTY_NAMES, *NOUN_NAMES, "is")
+TEXT = (*PROPERTIES, *NOUNS, "is")
 istext = lambda symbol: symbol in TEXT
 isempty = lambda cell: cell == "."
 
@@ -98,26 +92,6 @@ def string_to_grid(string, row_delimiter="\n", col_delimiter=""):
     ]
 
 
-
-def default_grid_string():
-    """Hardcoded default grid string"""
-    return ".............\n.rip....RRR..\n.......R...R.\n.biy.B.R.F.R.\n.......R...R.\n.fin....RRR..\n............."
-
-
-def default_grid():
-    """Hardcoded default grid"""
-    return [
-        [".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "."],
-        [".", "r", "i", "p", ".", ".", ".", ".", "R", "R", "R", ".", "."],
-        [".", ".", ".", ".", ".", ".", ".", "R", ".", ".", ".", "R", "."],
-        [".", "b", "i", "y", ".", "B", ".", "R", ".", "F", ".", "R", "."],
-        [".", ".", ".", ".", ".", ".", ".", "R", ".", ".", ".", "R", "."],
-        [".", "f", "i", "n", ".", ".", ".", ".", "R", "R", "R", ".", "."],
-        [".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "."],
-    ]
-
-
-
 def transpose(grid):
     return [list(col) for col in zip(*grid)]
 
@@ -158,7 +132,7 @@ def make_behaviour(you=False, push=False, win=False):
 
 
 def isvalidgrid(grid):
-    """A pile of assertion to check that the grid is valid"""
+    """A pile of assertions to check that the grid is valid"""
 
     # Make sure grid is a list of lists
     assert isinstance(grid, list), "Grid is not a list"
@@ -173,10 +147,3 @@ def isvalidgrid(grid):
         assert len(row) == M, "Grid must be rectangular"
         for cell in row:
             assert cell in (*SYMBOLS, "."), f"'{cell}' is not a valid symbol"
-
-
-def symbol_to_name(symbol):
-    """Give a full name of a symbol"""
-    for s, name in zip(SYMBOLS, SYMBOL_NAMES):
-        if symbol == s:
-            return name
