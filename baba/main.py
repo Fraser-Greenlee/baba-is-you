@@ -8,7 +8,7 @@ from baba.rules import (
     ruleparser,
 )
 from baba.utils import (
-    rotate_180, rotate_p90, rotate_m90,
+    PROPERTIES, rotate_180, rotate_p90, rotate_m90,
     isentity, istext, isempty, empty_NM,
     flatten,
 )
@@ -118,14 +118,14 @@ class Board:
 
     def runstep(self, step, behaviours):
         """Advance grid a single step, given the step and the current behaviours"""
-        self.grid = rots[step](self.grid)
-        N, M = len(self.grid), len(self.grid[0])
+        grid = rots[step](self.grid)
+        N, M = len(grid), len(grid[0])
         new_grid = empty_NM(N, M)
 
         isyou = lambda cell: isentity(cell) and behaviours[cell.lower()]["you"]
         iswin = lambda cell: isentity(cell) and behaviours[cell.lower()]["win"]
 
-        for j, row in enumerate(self.grid):
+        for j, row in enumerate(grid):
             for k, cell in enumerate(row):
                 if isempty(cell):
                     continue  # Already empty
@@ -153,7 +153,7 @@ class Board:
         new_grid = crots[step](new_grid)
         return new_grid
 
-    def update(self, step):
+    def update(self, step=None):
         rules = rulefinder(self.grid)
         behaviours, swaps = ruleparser(rules)
 
@@ -171,8 +171,7 @@ class Board:
 
         # Timestep the grid
         if step:
-            self.runstep(step, behaviours)
-        step += 1
+            self.grid = self.runstep(step, behaviours)
 
     def draw(self):
         for _y, row in enumerate(self.grid):
@@ -183,7 +182,7 @@ class Board:
                     continue
                 u, v = SPRITE_POS[tilename]
 
-                if tilename[0] == '_':
+                if tilename in PROPERTIES:
                     corner = pyxel.image(0).pget(u*8,v*8)
                     pyxel.rect(x, y+8, 9, 1, corner)
                     pyxel.rect(x+8, y, 1, 9, corner)
@@ -196,21 +195,30 @@ class App:
         pyxel.init(8*15, 8*15, title="BABA IS YOU")
         pyxel.load('../my_resource.pyxres')
         self.board = Board()
+        self.board.update()
+        self.last_step = None
         pyxel.run(self.update, self.draw)
 
     def update(self):
         step = None
         if pyxel.btn(pyxel.KEY_LEFT) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_LEFT):
             step = '<'
-        if pyxel.btn(pyxel.KEY_RIGHT) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_RIGHT):
+        elif pyxel.btn(pyxel.KEY_RIGHT) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_RIGHT):
             step = '>'
-        if pyxel.btn(pyxel.KEY_UP) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_UP):
+        elif pyxel.btn(pyxel.KEY_UP) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_UP):
             step = '^'
-        if pyxel.btn(pyxel.KEY_DOWN) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_DOWN):
-            step = 'v'
+        elif pyxel.btn(pyxel.KEY_DOWN) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_DOWN):
+            step = 'V'
+        else:
+            self.last_step = None
+
+        if step == self.last_step:
+            step = None
 
         if step:
             self.board.update(step)
+            self.board.update()
+            self.last_step = step
 
     def draw(self):
         pyxel.cls(0)

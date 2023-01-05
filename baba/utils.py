@@ -83,7 +83,6 @@ def grid_to_string(grid, row_delimiter="\n", col_delimiter=""):
     return row_delimiter.join(col_delimiter.join(row) for row in grid)
 
 
-
 def string_to_grid(string, row_delimiter="\n", col_delimiter=""):
     """Convert multiline string to grid"""
     return [
@@ -115,20 +114,14 @@ def rotate_180(grid):
     return rotate_p90(rotate_p90(grid))
 
 
-
-
-
 def empty_NM(N, M, element="."):
     """Make an empty NxM grid"""
     return [[element for _ in range(M)] for _ in range(N)]
 
 
-def make_behaviour(you=False, push=False, win=False):
+def make_behaviour(you=False, push=False, win=False, stop=False):
     """Helper to make a behaviour"""
-    return dict(zip(PROPERTIES, (you, push, win)))
-
-
-
+    return dict(zip(PROPERTIES, (you, push, win, stop)))
 
 
 def isvalidgrid(grid):
