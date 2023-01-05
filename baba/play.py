@@ -85,6 +85,29 @@ class Board:
 
         return new_grid
 
+    def attempt_to_move(self, pile, behaviours):
+        """Attempt to move a pile of cells in accordance with their behaviour"""
+
+        if len(pile) == 0:  # Empty pile
+            raise UnableToMove
+
+        if isempty(pile[0]):  # Trivial pile
+            return pile
+        elif len(pile) == 1:  # One-element pile
+            raise UnableToMove
+
+        # Larger pile
+        pushable = lambda cell: (isentity(cell) and behaviours[cell.lower()]["p"]) or (
+            istext(cell) and behaviours["t"]["p"]
+        )
+        if not pushable(pile[0]):
+            raise UnableToMove
+
+        if isempty(pile[1]):
+            return (pile[1], pile[0], *pile[2:])
+        else:
+            budged = self.attempt_to_move(pile[1:], behaviours)
+            return (budged[0], pile[0], *budged[1:])
 
     def timestep(self, step, behaviours):
         """Advance grid a single timestep, given the step and the current behaviours"""
@@ -108,7 +131,7 @@ class Board:
                 # Attempt to move
                 pile = [new_grid[l][k] for l in reversed(range(j))]
                 try:
-                    shifted_pile = attempt_to_move(pile, behaviours)
+                    shifted_pile = self.attempt_to_move(pile, behaviours)
                     for l, elem in enumerate(reversed(shifted_pile)):
                         new_grid[l][k] = elem
 
