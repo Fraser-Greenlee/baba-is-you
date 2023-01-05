@@ -33,7 +33,11 @@ PROPERTIES = ("you", "push", "win", "stop")
 
 NOUNS = ("baba", "wall", "flag", "rock")
 
-ENTITIES = tuple(n.capitalize() for n in NOUNS)
+class Entity(str):
+    dir = '>'
+
+
+ENTITIES = tuple(Entity(n.capitalize()) for n in NOUNS)
 
 # Helper functions
 isproperty = lambda symbol: symbol in PROPERTIES

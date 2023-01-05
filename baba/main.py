@@ -8,7 +8,7 @@ from baba.rules import (
     ruleparser,
 )
 from baba.utils import (
-    PROPERTIES, rotate_180, rotate_p90, rotate_m90,
+    PROPERTIES, Entity, rotate_180, rotate_p90, rotate_m90,
     isentity, istext, isempty, empty_NM,
     flatten,
 )
@@ -27,12 +27,9 @@ SPRITE_NAMES = {
     (10, 0): 'stop',
     (11, 0): 'push',
 
-    (0, 11): 'Baba',
-    (0, 12): 'Baba',
-    (0, 13): 'Baba',
-    (0, 14): 'Baba',
-    (4, 0): 'Wall',
-    (5, 0): 'Rock',
+    (0, 11): Entity('Baba'),
+    (4, 0): Entity('Wall'),
+    (5, 0): Entity('Rock'),
 }
 SPRITE_NAMES = defaultdict(lambda: '.', SPRITE_NAMES)
 SPRITE_POS = {v: k for k, v in SPRITE_NAMES.items()}
@@ -134,6 +131,8 @@ class Board:
                     new_grid[j][k] = cell
                     continue
 
+                cell.dir = step
+
                 # Attempt to move
                 pile = [new_grid[l][k] for l in reversed(range(j))]
                 try:
@@ -187,6 +186,9 @@ class Board:
                     pyxel.rect(x, y+8, 9, 1, corner)
                     pyxel.rect(x+8, y, 1, 9, corner)
 
+                if tilename == 'Baba':
+                    v += '>V^<'.index(tilename.dir)
+
                 pyxel.blt(x, y, 0, u*8, v*8, 8, 8)
 
 
@@ -196,6 +198,7 @@ class App:
         pyxel.load('../my_resource.pyxres')
         self.board = Board()
         self.board.update()
+        self.board.update('<')
         self.last_step = None
         pyxel.run(self.update, self.draw)
 
