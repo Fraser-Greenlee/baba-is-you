@@ -13,7 +13,7 @@ from baba.utils import (
     flatten,
 )
 
-BOARD_SHAPE = (8, 8)
+BOARD_SHAPE = (13, 7)
 SPRITE_NAMES = {
     (16, 0): 'baba',
     (17, 0): 'flag',
@@ -28,6 +28,7 @@ SPRITE_NAMES = {
     (11, 0): 'push',
 
     (0, 11): Entity('Baba'),
+    (3, 0): Entity('Flag'),
     (4, 0): Entity('Wall'),
     (5, 0): Entity('Rock'),
 }
@@ -84,8 +85,8 @@ class Board:
                 for k, cell in enumerate(row):
                     if isentity(cell):
                         # If the rule applies to the cell, and no other rule has been applied yet
-                        if cell.lower() == a and new_grid[j][k] is cell:
-                            new_grid[j][k] = b.upper()
+                        if cell.lower() == a and new_grid[j][k] == cell:
+                            new_grid[j][k] = Entity(b.capitalize())
 
         return new_grid
 
@@ -194,12 +195,12 @@ class Board:
 
 class App:
     def __init__(self):
-        pyxel.init(8*15, 8*15, title="BABA IS YOU")
+        pyxel.init(BOARD_SHAPE[0]*9, BOARD_SHAPE[1]*9, display_scale=5, title="BABA IS YOU")
         pyxel.load('../my_resource.pyxres')
         self.board = Board()
         self.board.update()
-        self.board.update('<')
         self.last_step = None
+        self.all_steps = ''
         pyxel.run(self.update, self.draw)
 
     def update(self):
@@ -222,6 +223,8 @@ class App:
             self.board.update(step)
             self.board.update()
             self.last_step = step
+            self.all_steps += step
+            print('steps:', self.all_steps)
 
     def draw(self):
         pyxel.cls(0)

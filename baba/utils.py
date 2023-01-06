@@ -16,8 +16,6 @@ __all__ = [
     "isempty",
     "grid_to_string",
     "string_to_grid",
-    "default_grid_string",
-    "default_grid",
     "transpose",
     "fliplr",
     "rotate_p90",
