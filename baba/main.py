@@ -201,15 +201,26 @@ class App:
         self.board.update()
         self.last_input = None
         self.all_steps = ''
-        self.stop = False
+        self.stop_banner = None
         pyxel.run(self.update, self.draw)
 
     def undo(self):
+        self.stop_banner = None
         self.board = Board()
         self.all_steps = self.all_steps[:-1]
         for step in self.all_steps:
             self.board.update(step)
             self.board.update()
+
+    @staticmethod
+    def show_win():
+        pyxel.rect((BOARD_SHAPE[0]/2-3)*8, BOARD_SHAPE[1]/2*8-4, 4*8-1+16, 5+8, 3)
+        pyxel.text((BOARD_SHAPE[0]/2-2)*8, BOARD_SHAPE[1]/2*8, 'YOU WIN', 10)
+
+    @staticmethod
+    def show_lose():
+        pyxel.rect((BOARD_SHAPE[0]/2-3)*8, BOARD_SHAPE[1]/2*8-4, 4*8-1+16, 5+8, 1)
+        pyxel.text((BOARD_SHAPE[0]/2-2)*8, BOARD_SHAPE[1]/2*8, 'YOU LOSE', 7)
 
     def update(self):
         inp = None
@@ -233,14 +244,21 @@ class App:
             if inp == 'X':
                 self.undo()
 
-            elif inp in '<>^V':
-                self.board.update(inp)
-                self.board.update()
+            elif self.stop_banner is None and inp in '<>^V':
+                try:
+                    self.board.update(inp)
+                    self.board.update()
+                except YouWin:
+                    self.stop_banner = self.show_win
+                except YouLose:
+                    self.stop_banner = self.show_lose
+
                 self.all_steps += inp
-                print('steps:', self.all_steps)
 
             self.last_input = inp
 
     def draw(self):
         pyxel.cls(0)
         self.board.draw()
+        if self.stop_banner is not None:
+            self.stop_banner()
