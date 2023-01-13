@@ -199,32 +199,47 @@ class App:
         pyxel.load('../my_resource.pyxres')
         self.board = Board()
         self.board.update()
-        self.last_step = None
+        self.last_input = None
         self.all_steps = ''
+        self.stop = False
         pyxel.run(self.update, self.draw)
 
-    def update(self):
-        step = None
-        if pyxel.btn(pyxel.KEY_LEFT) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_LEFT):
-            step = '<'
-        elif pyxel.btn(pyxel.KEY_RIGHT) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_RIGHT):
-            step = '>'
-        elif pyxel.btn(pyxel.KEY_UP) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_UP):
-            step = '^'
-        elif pyxel.btn(pyxel.KEY_DOWN) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_DOWN):
-            step = 'V'
-        else:
-            self.last_step = None
-
-        if step == self.last_step:
-            step = None
-
-        if step:
+    def undo(self):
+        self.board = Board()
+        self.all_steps = self.all_steps[:-1]
+        for step in self.all_steps:
             self.board.update(step)
             self.board.update()
-            self.last_step = step
-            self.all_steps += step
-            print('steps:', self.all_steps)
+
+    def update(self):
+        inp = None
+        if pyxel.btn(pyxel.KEY_LEFT) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_LEFT):
+            inp = '<'
+        elif pyxel.btn(pyxel.KEY_RIGHT) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_RIGHT):
+            inp = '>'
+        elif pyxel.btn(pyxel.KEY_UP) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_UP):
+            inp = '^'
+        elif pyxel.btn(pyxel.KEY_DOWN) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_DOWN):
+            inp = 'V'
+        elif pyxel.btn(pyxel.KEY_SPACE) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_A):
+            inp = 'X'
+        else:
+            self.last_input = None
+
+        if inp == self.last_input:
+            inp = None
+
+        if inp:
+            if inp == 'X':
+                self.undo()
+
+            elif inp in '<>^V':
+                self.board.update(inp)
+                self.board.update()
+                self.all_steps += inp
+                print('steps:', self.all_steps)
+
+            self.last_input = inp
 
     def draw(self):
         pyxel.cls(0)
