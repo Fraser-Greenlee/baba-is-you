@@ -13,7 +13,7 @@ from baba.utils import (
     flatten,
 )
 
-BOARD_SHAPE = (13, 7)
+BOARD_SHAPE = (16, 16)
 SPRITE_NAMES = {
     (16, 0): 'baba',
     (17, 0): 'flag',
@@ -214,13 +214,13 @@ class App:
 
     @staticmethod
     def show_win():
-        pyxel.rect((BOARD_SHAPE[0]/2-3)*8, BOARD_SHAPE[1]/2*8-4, 4*8-1+16, 5+8, 3)
-        pyxel.text((BOARD_SHAPE[0]/2-2)*8, BOARD_SHAPE[1]/2*8, 'YOU WIN', 10)
+        pyxel.rect((BOARD_SHAPE[0]/2-2)*8, BOARD_SHAPE[1]/2*8-4, 4*8-1+16, 5+8, 3)
+        pyxel.text((BOARD_SHAPE[0]/2-1)*8, BOARD_SHAPE[1]/2*8, 'YOU WIN', 10)
 
     @staticmethod
     def show_lose():
-        pyxel.rect((BOARD_SHAPE[0]/2-3)*8, BOARD_SHAPE[1]/2*8-4, 4*8-1+16, 5+8, 1)
-        pyxel.text((BOARD_SHAPE[0]/2-2)*8, BOARD_SHAPE[1]/2*8, 'YOU LOSE', 7)
+        pyxel.rect((BOARD_SHAPE[0]/2-2)*8, BOARD_SHAPE[1]/2*8-4, 4*8-1+16, 5+8, 1)
+        pyxel.text((BOARD_SHAPE[0]/2-1)*8, BOARD_SHAPE[1]/2*8, 'YOU LOSE', 7)
 
     def update(self):
         inp = None
