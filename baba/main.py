@@ -106,7 +106,7 @@ class Board:
 
         return new_grid
 
-    def attempt_to_move(self, you, pile, behaviours):
+    def attempt_to_move(self, pile, behaviours):
         """Attempt to move a pile of cells in accordance with their behaviour"""
 
         if len(pile) == 0:  # Empty pile
@@ -129,35 +129,36 @@ class Board:
         ismelt = lambda cell: _is(cell, "melt")
 
         # Larger pile
-        def pushable(cell):
+        def could_move():
             return (
-                ispush(cell)
-            ) or you and (
-                (
-                    ishot(you) and ismelt(cell)
-                ) or (
-                    issink(you)
-                )
-            ) 
-        if not pushable(pile[0]):
+                isempty(pile[1])
+            ) or (
+                ispush(pile[1])
+            ) or (
+                issink(pile[0])
+            ) or (
+                issink(pile[1])
+            ) or (
+                ishot(pile[0]) and ismelt(pile[1])
+            ) or (
+                ismelt(pile[0]) and ishot(pile[1])
+            )
+
+        if not could_move():
             raise UnableToMove
 
-        if you:
-            if issink(you):
-                return (pile[0], pile[1], *pile[2:])
-            if ismelt(you) and ishot(pile[0]):
-                return (pile[0], pile[1], *pile[2:])
-            if ismelt(pile[0]) and ishot(you):
-                return (pile[0], pile[1], *pile[2:])
+        if issink(pile[0]) or issink(pile[1]):
+            return ('.', '.', *pile[2:])
 
-        if issink(pile[1]):
-            return (pile[0], pile[1], *pile[2:])
         if ishot(pile[1]) and ismelt(pile[0]):
-            return (pile[0], pile[1], *pile[2:])
-        if isempty(pile[1]):
-            return (pile[1], pile[0], *pile[2:])
+            return ('.', pile[1], *pile[2:])
+        if ismelt(pile[1]) and ishot(pile[0]):
+            return ('.', pile[0], *pile[2:])
 
-        budged = self.attempt_to_move(None, pile[1:], behaviours)
+        if isempty(pile[1]):
+            return ('.', pile[0], *pile[2:])
+
+        budged = self.attempt_to_move(pile[1:], behaviours)
         return (budged[0], pile[0], *budged[1:])
 
     def runstep(self, step, behaviours):
@@ -181,15 +182,14 @@ class Board:
                 cell.dir = step
 
                 # Attempt to move
-                pile = [new_grid[l][k] for l in reversed(range(j))]
+                pile = [cell] + [new_grid[l][k] for l in reversed(range(j))]
                 try:
-                    shifted_pile = self.attempt_to_move(cell, pile, behaviours)
+                    shifted_pile = self.attempt_to_move(pile, behaviours)
                     for l, elem in enumerate(reversed(shifted_pile)):
                         new_grid[l][k] = elem
 
-                    new_grid[j - 1][k] = cell
                 except UnableToMove:
-                    if len(pile) > 0 and iswin(pile[0]):
+                    if len(pile) > 0 and iswin(pile[1]):
                         raise YouWin(
                             f"You are '{cell}' and you've walked onto a '{pile[0]}'"
                             " which is 'win'. Hooray! :D "
