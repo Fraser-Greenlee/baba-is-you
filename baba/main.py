@@ -13,24 +13,36 @@ from baba.utils import (
     flatten,
 )
 
-BOARD_SHAPE = (16, 16)
+BOARD_SIZE = 16
 SPRITE_NAMES = {
     (16, 0): 'baba',
     (17, 0): 'flag',
     (18, 0): 'wall',
     (19, 0): 'rock',
+    (17, 1): 'grass',
+    (20, 3): 'skull',
+    (20, 2): 'key',
+    (16, 2): 'lava',
+    (19, 1): 'water',
 
     (24, 0): 'is',
 
     (8, 0): 'you',
-    (9, 0): 'win',
-    (10, 0): 'stop',
     (11, 0): 'push',
+    (9, 0): 'win',
+    (10, 0): 'hot',
+    (12, 0): 'melt',
+    (11, 1): 'sink',
 
     (0, 11): Entity('Baba'),
     (3, 0): Entity('Flag'),
     (4, 0): Entity('Wall'),
     (5, 0): Entity('Rock'),
+    (0, 4): Entity('Grass'),
+    (4, 4): Entity('Skull'),
+    (7, 4): Entity('Key'),
+    (5, 4): Entity('Water'),
+    (2, 4): Entity('Lava'),
 }
 SPRITE_NAMES = defaultdict(lambda: '.', SPRITE_NAMES)
 SPRITE_POS = {v: k for k, v in SPRITE_NAMES.items()}
@@ -63,12 +75,13 @@ class YouLose(GameEnd):
 
 
 class Board:
-    def __init__(self):
+    def __init__(self, level):
         tilemap = pyxel.tilemap(0)
         self.grid = []
-        for y in range(BOARD_SHAPE[1]):
+        map_start = level * BOARD_SIZE
+        for y in range(BOARD_SIZE):
             self.grid.append([])
-            for x in range(BOARD_SHAPE[0]):
+            for x in range(map_start, map_start + BOARD_SIZE):
                 sprite_index = tilemap.pget(x, y)
                 self.grid[-1].append(SPRITE_NAMES[sprite_index])
 
@@ -86,11 +99,14 @@ class Board:
                     if isentity(cell):
                         # If the rule applies to the cell, and no other rule has been applied yet
                         if cell.lower() == a and new_grid[j][k] == cell:
-                            new_grid[j][k] = Entity(b.capitalize())
+                            if b == 'empty':
+                                new_grid[j][k] = '.'
+                            else:
+                                new_grid[j][k] = Entity(b.capitalize())
 
         return new_grid
 
-    def attempt_to_move(self, pile, behaviours):
+    def attempt_to_move(self, you, pile, behaviours):
         """Attempt to move a pile of cells in accordance with their behaviour"""
 
         if len(pile) == 0:  # Empty pile
@@ -101,18 +117,48 @@ class Board:
         elif len(pile) == 1:  # One-element pile
             raise UnableToMove
 
+        def _is(cell, property):
+            if istext(cell):
+                cell = "text"
+            elif cell == '.':
+                cell = 'empty'
+            return behaviours[cell.lower()][property]
+        ispush = lambda cell: _is(cell, "push")
+        issink = lambda cell: _is(cell, "sink")
+        ishot = lambda cell: _is(cell, "hot")
+        ismelt = lambda cell: _is(cell, "melt")
+
         # Larger pile
-        pushable = lambda cell: (isentity(cell) and behaviours[cell.lower()]["push"]) or (
-            istext(cell) and behaviours["text"]["push"]
-        )
+        def pushable(cell):
+            return (
+                ispush(cell)
+            ) or you and (
+                (
+                    ishot(you) and ismelt(cell)
+                ) or (
+                    issink(you)
+                )
+            ) 
         if not pushable(pile[0]):
             raise UnableToMove
 
+        if you:
+            if issink(you):
+                return (pile[0], pile[1], *pile[2:])
+            if ismelt(you) and ishot(pile[0]):
+                return (pile[0], pile[1], *pile[2:])
+            if ismelt(pile[0]) and ishot(you):
+                return (pile[0], pile[1], *pile[2:])
+
+        if issink(pile[1]):
+            return (pile[0], pile[1], *pile[2:])
+        if ishot(pile[1]) and ismelt(pile[0]):
+            return (pile[0], pile[1], *pile[2:])
         if isempty(pile[1]):
             return (pile[1], pile[0], *pile[2:])
-        else:
-            budged = self.attempt_to_move(pile[1:], behaviours)
-            return (budged[0], pile[0], *budged[1:])
+
+        budged = self.attempt_to_move(None, pile[1:], behaviours)
+        return (budged[0], pile[0], *budged[1:])
 
     def runstep(self, step, behaviours):
         """Advance grid a single step, given the step and the current behaviours"""
@@ -137,7 +183,7 @@ class Board:
                 # Attempt to move
                 pile = [new_grid[l][k] for l in reversed(range(j))]
                 try:
-                    shifted_pile = self.attempt_to_move(pile, behaviours)
+                    shifted_pile = self.attempt_to_move(cell, pile, behaviours)
                     for l, elem in enumerate(reversed(shifted_pile)):
                         new_grid[l][k] = elem
 
@@ -161,6 +207,9 @@ class Board:
         for noun in behaviours:
             if behaviours[noun]["you"] and behaviours[noun]["win"]:
                 raise YouWin(f"You are '{noun}' and you are 'win'. Hooray! :D")
+
+            if behaviours[noun]["hot"] and behaviours[noun]["melt"]:
+                swaps.append((noun, 'empty'))
 
         # Do the swap
         self.grid = self.swap(self.grid, swaps)
@@ -195,9 +244,10 @@ class Board:
 
 class App:
     def __init__(self):
-        pyxel.init(BOARD_SHAPE[0]*9, BOARD_SHAPE[1]*9, display_scale=5, title="BABA IS YOU")
+        pyxel.init(BOARD_SIZE*9, BOARD_SIZE*9, display_scale=5, title="BABA IS YOU")
         pyxel.load('../my_resource.pyxres')
-        self.board = Board()
+        self.level = 3
+        self.board = Board(self.level)
         self.board.update()
         self.last_input = None
         self.all_steps = ''
@@ -214,13 +264,13 @@ class App:
 
     @staticmethod
     def show_win():
-        pyxel.rect((BOARD_SHAPE[0]/2-2)*8, BOARD_SHAPE[1]/2*8-4, 4*8-1+16, 5+8, 3)
-        pyxel.text((BOARD_SHAPE[0]/2-1)*8, BOARD_SHAPE[1]/2*8, 'YOU WIN', 10)
+        pyxel.rect((BOARD_SIZE/2-2)*8, BOARD_SIZE/2*8-4, 4*8-1+16, 5+8, 3)
+        pyxel.text((BOARD_SIZE/2-1)*8, BOARD_SIZE/2*8, 'YOU WIN', 10)
 
     @staticmethod
     def show_lose():
-        pyxel.rect((BOARD_SHAPE[0]/2-2)*8, BOARD_SHAPE[1]/2*8-4, 4*8-1+16, 5+8, 1)
-        pyxel.text((BOARD_SHAPE[0]/2-1)*8, BOARD_SHAPE[1]/2*8, 'YOU LOSE', 7)
+        pyxel.rect((BOARD_SIZE/2-2)*8, BOARD_SIZE/2*8-4, 4*8-1+16, 5+8, 1)
+        pyxel.text((BOARD_SIZE/2-1)*8, BOARD_SIZE/2*8, 'YOU LOSE', 7)
 
     def update(self):
         inp = None

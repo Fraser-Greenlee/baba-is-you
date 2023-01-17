@@ -27,9 +27,20 @@ __all__ = [
 ]
 
 
-PROPERTIES = ("you", "push", "win", "stop")
+PROPERTIES = ('you', 'push', 'win', 'hot', 'melt', 'sink')
 
-NOUNS = ("baba", "wall", "flag", "rock")
+NOUNS = (
+    'baba',
+    'flag',
+    'wall',
+    'rock',
+    'grass',
+    'skull',
+    'key',
+    'lava',
+    'water',
+    'empty'
+)
 
 class Entity(str):
     dir = '>'
@@ -121,9 +132,9 @@ def empty_NM(N, M, element="."):
     return [[element for _ in range(M)] for _ in range(N)]
 
 
-def make_behaviour(you=False, push=False, win=False, stop=False):
+def make_behaviour(you=False, push=False, win=False, hot=False, melt=False, sink=False):
     """Helper to make a behaviour"""
-    return dict(zip(PROPERTIES, (you, push, win, stop)))
+    return dict(zip(PROPERTIES, (you, push, win, hot, melt, sink)))
 
 
 def isvalidgrid(grid):
