@@ -246,7 +246,7 @@ class App:
     def __init__(self):
         pyxel.init(BOARD_SIZE*9, BOARD_SIZE*9, display_scale=5, title="BABA IS YOU")
         pyxel.load('../my_resource.pyxres')
-        self.level = 1
+        self.level = 0
         self.board = Board(self.level)
         self.board.update()
         self.last_input = None
