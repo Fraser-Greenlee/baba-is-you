@@ -189,7 +189,7 @@ class Board:
                         new_grid[l][k] = elem
 
                 except UnableToMove:
-                    if len(pile) > 0 and iswin(pile[1]):
+                    if len(pile) > 1 and iswin(pile[1]):
                         raise YouWin(
                             f"You are '{cell}' and you've walked onto a '{pile[0]}'"
                             " which is 'win'. Hooray! :D "
@@ -246,7 +246,7 @@ class App:
     def __init__(self):
         pyxel.init(BOARD_SIZE*9, BOARD_SIZE*9, display_scale=5, title="BABA IS YOU")
         pyxel.load('../my_resource.pyxres')
-        self.level = -1
+        self.level = 1
         self.stop_banner = None
         self.next_level()
         pyxel.run(self.update, self.draw)
