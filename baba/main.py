@@ -246,13 +246,21 @@ class App:
     def __init__(self):
         pyxel.init(BOARD_SIZE*9, BOARD_SIZE*9, display_scale=5, title="BABA IS YOU")
         pyxel.load('../my_resource.pyxres')
-        self.level = 0
+        self.level = 1
+        self.stop_banner = None
+        self.next_level()
+        pyxel.run(self.update, self.draw)
+
+    def next_level(self):
+        self.level += 1
+        if self.level > 2:
+            self.stop_banner = self.show_end
+
         self.board = Board(self.level)
-        self.board.update()
+        if self.stop_banner is None:
+            self.board.update()
         self.last_input = None
         self.all_steps = ''
-        self.stop_banner = None
-        pyxel.run(self.update, self.draw)
 
     def undo(self):
         self.stop_banner = None
@@ -271,6 +279,11 @@ class App:
     def show_lose():
         pyxel.rect((BOARD_SIZE/2-2)*8, BOARD_SIZE/2*8-4, 4*8-1+16, 5+8, 1)
         pyxel.text((BOARD_SIZE/2-1)*8, BOARD_SIZE/2*8, 'YOU LOSE', 7)
+
+    @staticmethod
+    def show_end():
+        pyxel.rect((BOARD_SIZE/2-2)*8, BOARD_SIZE/2*8-4, 4*8-1+16, 5+8, 3)
+        pyxel.text((BOARD_SIZE/2-1)*8, BOARD_SIZE/2*8, 'THE END', 10)
 
     def update(self):
         inp = None
@@ -304,6 +317,9 @@ class App:
                     self.stop_banner = self.show_lose
 
                 self.all_steps += inp
+
+            elif self.stop_banner == self.show_win:
+                self.next_level()
 
             self.last_input = inp
 
