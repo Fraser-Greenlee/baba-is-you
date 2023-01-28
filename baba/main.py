@@ -246,7 +246,7 @@ class App:
     def __init__(self):
         pyxel.init(BOARD_SIZE*9, BOARD_SIZE*9, display_scale=5, title="BABA IS YOU")
         pyxel.load('../my_resource.pyxres')
-        self.level = 1
+        self.level = -1
         self.stop_banner = None
         self.next_level()
         pyxel.run(self.update, self.draw)
