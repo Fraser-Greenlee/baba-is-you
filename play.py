@@ -1,2 +1,2 @@
-from baba.main import App
-app = App()
+from baba.app import App
+App()
