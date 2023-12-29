@@ -13,7 +13,8 @@ from baba.utils import (
     flatten,
 )
 
-BOARD_SIZE = 16
+BOARD_SIZE = 8
+PIXELS_PER_CELL = 9
 SPRITE_NAMES = {
     (16, 0): 'baba',
     (17, 0): 'flag',
@@ -225,16 +226,17 @@ class Board:
     def draw(self):
         for _y, row in enumerate(self.grid):
             for _x, tilename in enumerate(row):
-                x, y = _x*9, _y*9
+                x, y = _x * PIXELS_PER_CELL, _y * PIXELS_PER_CELL
 
                 if tilename == '.':
                     continue
                 u, v = SPRITE_POS[tilename]
 
                 if tilename in PROPERTIES:
-                    corner = pyxel.image(0).pget(u*8,v*8)
-                    pyxel.rect(x, y+8, 9, 1, corner)
-                    pyxel.rect(x+8, y, 1, 9, corner)
+                    # pad property tiles with top left corner color
+                    corner = pyxel.image(0).pget(u*8, v*8)
+                    pyxel.rect(x, y + PIXELS_PER_CELL - 1, PIXELS_PER_CELL, 1, corner)
+                    pyxel.rect(x + PIXELS_PER_CELL - 1, y, 1, PIXELS_PER_CELL, corner)
 
                 if tilename == 'Baba':
                     v += '>V^<'.index(tilename.dir)
@@ -244,7 +246,7 @@ class Board:
 
 class App:
     def __init__(self):
-        pyxel.init(BOARD_SIZE*9, BOARD_SIZE*9, display_scale=5, title="BABA IS YOU")
+        pyxel.init(BOARD_SIZE * PIXELS_PER_CELL, BOARD_SIZE * PIXELS_PER_CELL, display_scale=5, title="BABA BOARD GAME")
         pyxel.load('../my_resource.pyxres')
         self.level = -1
         self.stop_banner = None
