@@ -1,4 +1,4 @@
-from baba.utils import (
+from baba.utils.const import (
     windowed,
     isnoun, isis, isproperty,
     make_behaviour,

@@ -1,65 +1,7 @@
 from collections import deque
 from itertools import chain, repeat
 
-
-__all__ = [
-    "PROPERTIES",
-    "NOUNS",
-    "ENTITIES",
-    "isproperty",
-    "isnoun",
-    "isentity",
-    "SYMBOLS",
-    "issymbol",
-    "isis",
-    "istext",
-    "isempty",
-    "grid_to_string",
-    "string_to_grid",
-    "transpose",
-    "fliplr",
-    "rotate_p90",
-    "rotate_m90",
-    "rotate_180",
-    "empty_NM",
-    "make_behaviour",
-    "isvalidgrid",
-]
-
-
-PROPERTIES = ('you', 'push', 'win', 'hot', 'melt', 'sink')
-
-NOUNS = (
-    'baba',
-    'flag',
-    'wall',
-    'rock',
-    'grass',
-    'skull',
-    'key',
-    'lava',
-    'water',
-    'empty'
-)
-
-class Entity(str):
-    dir = '>'
-
-
-ENTITIES = tuple(Entity(n.capitalize()) for n in NOUNS)
-
-# Helper functions
-isproperty = lambda symbol: symbol in PROPERTIES
-isnoun = lambda symbol: symbol in NOUNS
-isentity = lambda symbol: symbol in ENTITIES
-
-SYMBOLS = (*PROPERTIES, *NOUNS, *ENTITIES, "is")
-issymbol = lambda symbol: symbol in SYMBOLS
-isis = lambda symbol: symbol == "is"
-
-TEXT = (*PROPERTIES, *NOUNS, "is")
-istext = lambda symbol: symbol in TEXT
-isempty = lambda cell: cell == "."
+from baba.utils.const import PROPERTIES, SYMBOLS
 
 
 def windowed(seq, n, fillvalue=None, step=1):
